@@ -1,0 +1,1632 @@
+openapi: 3.0.1
+info:
+  title: OpenAPI definition
+  version: v0
+servers:
+- url: http://localhost:18080
+  description: Generated server url
+tags:
+- name: Card Security
+  description: Card security settings management
+- name: Virtual Cards
+  description: Virtual card issuance and management
+- name: Card Limits
+  description: Card spending and withdrawal limits management
+- name: Cards
+  description: "Card lifecycle management - issue, activate, block, replace, and cancel\
+    \ cards"
+- name: Credit Line
+  description: Credit card revolving line management
+- name: Card Backoffice
+  description: Administrative operations for card management
+paths:
+  /api/v1/cards/{cardId}/security/{securitySettingId}:
+    put:
+      tags:
+      - Card Security
+      summary: Update security settings
+      description: Updates security settings for a card
+      operationId: updateSecuritySettings
+      parameters:
+      - name: cardId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: securitySettingId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateSecuritySettingsCommand"
+        required: true
+      responses:
+        "200":
+          description: OK
+  /api/v1/cards/{cardId}/limits/{limitId}:
+    put:
+      tags:
+      - Card Limits
+      summary: Update card limits
+      description: Updates spending or withdrawal limits for a card
+      operationId: updateLimits
+      parameters:
+      - name: cardId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: limitId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCardLimitsCommand"
+        required: true
+      responses:
+        "200":
+          description: OK
+  /api/v1/backoffice/cards/{cardId}/security:
+    get:
+      tags:
+      - Card Backoffice
+      summary: Get card security settings
+      description: Retrieves security configurations for the card
+      operationId: getCardSecurity
+      parameters:
+      - name: cardId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CardSecurityDTO"
+    put:
+      tags:
+      - Card Backoffice
+      summary: Update security
+      description: Updates card security settings
+      operationId: updateSecurity
+      parameters:
+      - name: cardId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateSecuritySettingsRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+  /api/v1/cards:
+    post:
+      tags:
+      - Cards
+      summary: Issue a new card
+      description: Issues a new debit or credit card for a customer
+      operationId: issueCard
+      parameters:
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IssueCardCommand"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/IssueCardResponse"
+  /api/v1/cards/{cardId}/virtual:
+    post:
+      tags:
+      - Virtual Cards
+      summary: Issue virtual card
+      description: Issues a virtual card linked to a physical card
+      operationId: issueVirtualCard
+      parameters:
+      - name: cardId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IssueVirtualCardCommand"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/VirtualCardResponse"
+  /api/v1/cards/{cardId}/unblock:
+    post:
+      tags:
+      - Cards
+      summary: Unblock a card
+      description: Removes a temporary block from a card
+      operationId: unblockCard
+      parameters:
+      - name: cardId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: unblockedBy
+        in: query
+        required: false
+        schema:
+          type: string
+          default: CUSTOMER
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+  /api/v1/cards/{cardId}/replace:
+    post:
+      tags:
+      - Cards
+      summary: Replace a card
+      description: "Replaces a lost, stolen, or damaged card"
+      operationId: replaceCard
+      parameters:
+      - name: cardId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: reason
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: transferLimits
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: true
+      - name: transferSecuritySettings
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: true
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ReplaceCardResponse"
+  /api/v1/cards/{cardId}/credit-line:
+    post:
+      tags:
+      - Credit Line
+      summary: Setup credit line
+      description: Sets up a revolving credit line for a credit card
+      operationId: setupCreditLine
+      parameters:
+      - name: cardId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetupCreditLineCommand"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CreditLineResponse"
+  /api/v1/cards/{cardId}/cancel:
+    post:
+      tags:
+      - Cards
+      summary: Cancel a card
+      description: Permanently cancels a card
+      operationId: cancelCard
+      parameters:
+      - name: cardId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: reason
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: cancelledBy
+        in: query
+        required: false
+        schema:
+          type: string
+          default: CUSTOMER
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+  /api/v1/cards/{cardId}/block:
+    post:
+      tags:
+      - Cards
+      summary: Block a card
+      description: Temporarily blocks a card
+      operationId: blockCard
+      parameters:
+      - name: cardId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: reason
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: blockedBy
+        in: query
+        required: false
+        schema:
+          type: string
+          default: CUSTOMER
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+  /api/v1/cards/{cardId}/activate:
+    post:
+      tags:
+      - Cards
+      summary: Activate a card
+      description: Activates a card using the activation code
+      operationId: activateCard
+      parameters:
+      - name: cardId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: activationCode
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+  /api/v1/backoffice/cards/{cardId}/virtual:
+    get:
+      tags:
+      - Card Backoffice
+      summary: Get virtual cards
+      description: Retrieves all virtual cards linked to the parent card
+      operationId: getVirtualCards
+      parameters:
+      - name: cardId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/VirtualCardDTO"
+    post:
+      tags:
+      - Card Backoffice
+      summary: Create virtual card
+      description: Creates a virtual card (saga operation)
+      operationId: createVirtualCard
+      parameters:
+      - name: cardId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateVirtualCardRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+                additionalProperties:
+                  type: object
+  /api/v1/backoffice/cards/{cardId}:
+    get:
+      tags:
+      - Card Backoffice
+      summary: Get card details
+      description: Retrieves full card information for backoffice review
+      operationId: getCard
+      parameters:
+      - name: cardId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CardDTO"
+  /api/v1/backoffice/cards/{cardId}/transactions:
+    get:
+      tags:
+      - Card Backoffice
+      summary: Get card transactions
+      description: Retrieves transactions for the card within a date range
+      operationId: getCardTransactions
+      parameters:
+      - name: cardId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: from
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date
+      - name: to
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CardTransactionDTO"
+  /api/v1/backoffice/cards/{cardId}/physical:
+    get:
+      tags:
+      - Card Backoffice
+      summary: Get physical card details
+      description: Retrieves physical card information
+      operationId: getPhysicalCard
+      parameters:
+      - name: cardId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PhysicalCardDTO"
+  /api/v1/backoffice/cards/{cardId}/limits:
+    get:
+      tags:
+      - Card Backoffice
+      summary: Get card limits
+      description: Retrieves all spending limits configured for the card
+      operationId: getCardLimits
+      parameters:
+      - name: cardId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CardLimitDTO"
+  /api/v1/backoffice/cards/{cardId}/disputes:
+    get:
+      tags:
+      - Card Backoffice
+      summary: Get card disputes
+      description: Retrieves all disputes associated with the card
+      operationId: getCardDisputes
+      parameters:
+      - name: cardId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CardDisputeDTO"
+  /api/v1/backoffice/cards/{cardId}/configuration:
+    get:
+      tags:
+      - Card Backoffice
+      summary: Get card configuration
+      description: Retrieves the configuration settings for the card
+      operationId: getCardConfiguration
+      parameters:
+      - name: cardId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CardConfigurationDTO"
+  /api/v1/backoffice/cards/{cardId}/balance:
+    get:
+      tags:
+      - Card Backoffice
+      summary: Get card balance
+      description: Retrieves the current balance of a card
+      operationId: getCardBalance
+      parameters:
+      - name: cardId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CardBalanceDTO"
+  /api/v1/backoffice/cards/{cardId}/activity:
+    get:
+      tags:
+      - Card Backoffice
+      summary: Get card activity
+      description: Retrieves activity history for the card
+      operationId: getCardActivity
+      parameters:
+      - name: cardId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CardActivityDTO"
+components:
+  schemas:
+    UpdateSecuritySettingsCommand:
+      type: object
+      properties:
+        cardId:
+          type: string
+          format: uuid
+        securitySettingId:
+          type: string
+          format: uuid
+        securityFeature:
+          type: string
+        enabled:
+          type: boolean
+    UpdateCardLimitsCommand:
+      type: object
+      properties:
+        cardId:
+          type: string
+          format: uuid
+        limitId:
+          type: string
+          format: uuid
+        limitType:
+          type: string
+        dailyLimit:
+          type: number
+        monthlyLimit:
+          type: number
+        transactionLimit:
+          type: number
+    UpdateSecuritySettingsRequest:
+      type: object
+      properties:
+        securitySettingId:
+          type: string
+          format: uuid
+        enabled:
+          type: boolean
+    IssueCardCommand:
+      type: object
+      properties:
+        customerId:
+          type: string
+          format: uuid
+        accountId:
+          type: string
+          format: uuid
+        cardProgramId:
+          type: string
+          format: uuid
+        cardType:
+          type: string
+        currency:
+          type: string
+    IssueCardResponse:
+      type: object
+      properties:
+        cardId:
+          type: string
+          format: uuid
+        executionId:
+          type: string
+        status:
+          type: string
+    IssueVirtualCardCommand:
+      type: object
+      properties:
+        parentCardId:
+          type: string
+          format: uuid
+        customerId:
+          type: string
+          format: uuid
+        purpose:
+          type: string
+        spendingLimit:
+          type: number
+        expiresAt:
+          type: string
+          format: date-time
+        singleUse:
+          type: boolean
+    VirtualCardResponse:
+      type: object
+      properties:
+        virtualCardId:
+          type: string
+          format: uuid
+        parentCardId:
+          type: string
+          format: uuid
+        executionId:
+          type: string
+        status:
+          type: string
+    ReplaceCardResponse:
+      type: object
+      properties:
+        oldCardId:
+          type: string
+          format: uuid
+        newCardId:
+          type: string
+          format: uuid
+        executionId:
+          type: string
+        status:
+          type: string
+    SetupCreditLineCommand:
+      type: object
+      properties:
+        cardId:
+          type: string
+          format: uuid
+        customerId:
+          type: string
+          format: uuid
+        creditLimit:
+          type: number
+        interestRate:
+          type: number
+        currency:
+          type: string
+    CreditLineResponse:
+      type: object
+      properties:
+        revolvingLineId:
+          type: string
+          format: uuid
+        cardId:
+          type: string
+          format: uuid
+        creditLimit:
+          type: number
+        executionId:
+          type: string
+        status:
+          type: string
+    CreateVirtualCardRequest:
+      type: object
+      properties:
+        customerId:
+          type: string
+          format: uuid
+        spendingLimit:
+          type: number
+    CardDTO:
+      required:
+      - accountId
+      - binId
+      - cardHolderId
+      - cardHolderName
+      - cardNetworkId
+      - cardNumber
+      - cardStatus
+      - cardTypeId
+      - currencyCode
+      - expirationMonth
+      - expirationYear
+      - isActive
+      - isLocked
+      - isPhysical
+      - isPrimary
+      - isVirtual
+      - issuerId
+      - partyId
+      type: object
+      properties:
+        dateCreated:
+          type: string
+          format: date-time
+        dateUpdated:
+          type: string
+          format: date-time
+        cardId:
+          type: string
+          format: uuid
+        cardNumber:
+          type: string
+        maskedCardNumber:
+          type: string
+        cardSequenceNumber:
+          type: string
+        binId:
+          type: string
+          format: uuid
+        cardTypeId:
+          type: string
+          format: uuid
+        cardNetworkId:
+          type: string
+          format: uuid
+        issuerId:
+          type: string
+          format: uuid
+        contractId:
+          type: string
+          format: uuid
+        accountId:
+          type: string
+          format: uuid
+        partyId:
+          type: string
+          format: uuid
+        cardStatus:
+          type: string
+          enum:
+          - ACTIVE
+          - BLOCKED
+          - EXPIRED
+          - CANCELLED
+        cardHolderName:
+          type: string
+        cardHolderId:
+          type: string
+        expirationMonth:
+          type: integer
+          format: int32
+        expirationYear:
+          type: integer
+          format: int32
+        cvv:
+          type: string
+        pin:
+          type: string
+        activationDate:
+          type: string
+          format: date-time
+        issuanceDate:
+          type: string
+          format: date-time
+        expirationDate:
+          type: string
+          format: date-time
+        lastUsedDate:
+          type: string
+          format: date-time
+        isPhysical:
+          type: boolean
+        isVirtual:
+          type: boolean
+        isPrimary:
+          type: boolean
+        isActive:
+          type: boolean
+        isLocked:
+          type: boolean
+        lockReason:
+          type: string
+        dailyLimit:
+          type: number
+          format: double
+        monthlyLimit:
+          type: number
+          format: double
+        creditLimit:
+          type: number
+          format: double
+        availableBalance:
+          type: number
+          format: double
+        currencyCode:
+          type: string
+        designId:
+          type: string
+          format: uuid
+        notes:
+          type: string
+    VirtualCardDTO:
+      type: object
+      properties:
+        dateCreated:
+          type: string
+          format: date-time
+        dateUpdated:
+          type: string
+          format: date-time
+        virtualCardId:
+          type: string
+          format: uuid
+        cardId:
+          type: string
+          format: uuid
+        deviceId:
+          type: string
+        virtualCardNumber:
+          type: string
+        virtualCardStatus:
+          type: string
+          enum:
+          - ACTIVE
+          - SUSPENDED
+          - CANCELLED
+        creationTimestamp:
+          type: string
+          format: date-time
+        updateTimestamp:
+          type: string
+          format: date-time
+    CardTransactionDTO:
+      required:
+      - cardFraudFlag
+      - cardId
+      - cardPresentFlag
+      - cardTransactionReference
+      - cardTransactionTimestamp
+      - transactionStatus
+      - transactionType
+      type: object
+      properties:
+        dateCreated:
+          type: string
+          format: date-time
+        dateUpdated:
+          type: string
+          format: date-time
+        cardTransactionId:
+          type: string
+          format: uuid
+        cardId:
+          type: string
+          format: uuid
+        transactionType:
+          type: string
+          enum:
+          - PURCHASE
+          - WITHDRAWAL
+          - PAYMENT
+          - FEE
+          - REFUND
+        merchantInfo:
+          type: string
+        transactionStatus:
+          type: string
+          enum:
+          - PENDING
+          - COMPLETED
+          - FAILED
+          - REVERSED
+        cardAuthCode:
+          type: string
+        cardMerchantCategoryCode:
+          type: string
+        cardMerchantName:
+          type: string
+        cardPosEntryMode:
+          type: string
+        cardTransactionReference:
+          type: string
+        cardTerminalId:
+          type: string
+        cardHolderCountry:
+          type: string
+        cardPresentFlag:
+          type: boolean
+        cardTransactionTimestamp:
+          type: string
+          format: date-time
+        cardFraudFlag:
+          type: boolean
+        cardCurrencyConversionRate:
+          type: number
+        cardFeeAmount:
+          type: number
+        cardFeeCurrency:
+          type: string
+        cardInstallmentPlan:
+          type: string
+    CardSecurityDTO:
+      type: object
+      properties:
+        dateCreated:
+          type: string
+          format: date-time
+        dateUpdated:
+          type: string
+          format: date-time
+        cardSecurityId:
+          type: string
+          format: uuid
+        cardId:
+          type: string
+          format: uuid
+        securityFeature:
+          type: string
+          enum:
+          - PIN_ENABLED
+          - TWO_FACTOR_AUTH
+          - FRAUD_DETECTION_ENABLED
+        securityStatus:
+          type: boolean
+    PhysicalCardDTO:
+      required:
+      - cardId
+      - designId
+      - embossedName
+      - isChip
+      - isContactless
+      - isMagstripe
+      - manufacturingStatus
+      - plasticId
+      - shippingAddress
+      - shippingCity
+      type: object
+      properties:
+        dateCreated:
+          type: string
+          format: date-time
+        dateUpdated:
+          type: string
+          format: date-time
+        physicalCardId:
+          type: string
+          format: uuid
+        cardId:
+          type: string
+          format: uuid
+        embossedName:
+          type: string
+        plasticId:
+          type: string
+        designId:
+          type: string
+          format: uuid
+        isContactless:
+          type: boolean
+        isChip:
+          type: boolean
+        isMagstripe:
+          type: boolean
+        manufacturingStatus:
+          type: string
+        manufacturingDate:
+          type: string
+          format: date-time
+        shippingAddress:
+          type: string
+        shippingCity:
+          type: string
+        shippingState:
+          type: string
+        shippingCountry:
+          type: string
+        shippingPostalCode:
+          type: string
+        shippingMethod:
+          type: string
+        shippingTrackingNumber:
+          type: string
+        shippingCarrier:
+          type: string
+        shipmentDate:
+          type: string
+          format: date-time
+        estimatedDeliveryDate:
+          type: string
+          format: date-time
+        actualDeliveryDate:
+          type: string
+          format: date-time
+        activationMethod:
+          type: string
+        activationDate:
+          type: string
+          format: date-time
+        isActivated:
+          type: boolean
+        replacementReason:
+          type: string
+        previousCardId:
+          type: string
+          format: uuid
+        notes:
+          type: string
+    CardLimitDTO:
+      required:
+      - cardId
+      - currentUsage
+      - limitAmount
+      - limitType
+      - resetPeriod
+      type: object
+      properties:
+        dateCreated:
+          type: string
+          format: date-time
+        dateUpdated:
+          type: string
+          format: date-time
+        cardLimitId:
+          type: string
+          format: uuid
+        cardId:
+          type: string
+          format: uuid
+        limitType:
+          type: string
+          enum:
+          - DAILY_SPENDING
+          - MONTHLY_SPENDING
+          - ATM_WITHDRAWAL
+          - ONLINE_PURCHASE
+        limitAmount:
+          type: number
+        currentUsage:
+          type: number
+        resetPeriod:
+          type: string
+          enum:
+          - DAILY
+          - MONTHLY
+    CardDisputeDTO:
+      type: object
+      properties:
+        dateCreated:
+          type: string
+          format: date-time
+        dateUpdated:
+          type: string
+          format: date-time
+        disputeId:
+          type: string
+          format: uuid
+        cardId:
+          type: string
+          format: uuid
+        transactionId:
+          type: string
+          format: uuid
+        partyId:
+          type: string
+          format: uuid
+        accountId:
+          type: string
+          format: uuid
+        disputeReference:
+          type: string
+        providerReference:
+          type: string
+        networkReference:
+          type: string
+        disputeReasonCode:
+          type: string
+        disputeReasonDescription:
+          type: string
+        disputeStatus:
+          type: string
+        disputeStage:
+          type: string
+        disputeAmount:
+          type: number
+        disputeCurrency:
+          type: string
+        filingTimestamp:
+          type: string
+          format: date-time
+        responseDueDate:
+          type: string
+          format: date-time
+        resolutionTimestamp:
+          type: string
+          format: date-time
+        resolutionCode:
+          type: string
+        resolutionDescription:
+          type: string
+        isCardholderCredited:
+          type: boolean
+        creditTimestamp:
+          type: string
+          format: date-time
+        creditAmount:
+          type: number
+        creditCurrency:
+          type: string
+        isMerchantDebited:
+          type: boolean
+        debitTimestamp:
+          type: string
+          format: date-time
+        debitAmount:
+          type: number
+        debitCurrency:
+          type: string
+        cardholderStatement:
+          type: string
+        merchantResponse:
+          type: string
+        evidenceDocuments:
+          type: string
+        assignedAgentId:
+          type: string
+          format: uuid
+        assignedAgentName:
+          type: string
+        lastUpdatedTimestamp:
+          type: string
+          format: date-time
+        notes:
+          type: string
+    CardConfigurationDTO:
+      type: object
+      properties:
+        dateCreated:
+          type: string
+          format: date-time
+        dateUpdated:
+          type: string
+          format: date-time
+        cardConfigurationId:
+          type: string
+          format: uuid
+        cardId:
+          type: string
+          format: uuid
+        programId:
+          type: string
+          format: uuid
+        configKey:
+          type: string
+        configValue:
+          type: string
+        configType:
+          type: string
+        isActive:
+          type: boolean
+        activationDate:
+          type: string
+          format: date-time
+        expirationDate:
+          type: string
+          format: date-time
+        isSystemDefault:
+          type: boolean
+        isProgramDefault:
+          type: boolean
+        isPartyConfigurable:
+          type: boolean
+        allowedValues:
+          type: string
+        minValue:
+          type: string
+        maxValue:
+          type: string
+        description:
+          type: string
+    CardBalanceDTO:
+      required:
+      - accountId
+      - asOfDate
+      - balanceAmount
+      - balanceCategory
+      - balanceType
+      - cardId
+      - currencyCode
+      - isChargedOff
+      - isDelinquent
+      - isInCollection
+      - isInGracePeriod
+      - isPromotionalRate
+      - isWrittenOff
+      - partyId
+      type: object
+      properties:
+        dateCreated:
+          type: string
+          format: date-time
+        dateUpdated:
+          type: string
+          format: date-time
+        balanceId:
+          type: string
+          format: uuid
+        cardId:
+          type: string
+          format: uuid
+        partyId:
+          type: string
+          format: uuid
+        accountId:
+          type: string
+          format: uuid
+        statementId:
+          type: string
+          format: uuid
+        balanceType:
+          type: string
+        balanceCategory:
+          type: string
+        balanceDescription:
+          type: string
+        balanceAmount:
+          type: number
+        availableAmount:
+          type: number
+        reservedAmount:
+          type: number
+        pendingAmount:
+          type: number
+        currencyCode:
+          type: string
+        asOfDate:
+          type: string
+          format: date-time
+        lastTransactionId:
+          type: string
+          format: uuid
+        lastTransactionTimestamp:
+          type: string
+          format: date-time
+        lastPaymentId:
+          type: string
+          format: uuid
+        lastPaymentTimestamp:
+          type: string
+          format: date-time
+        lastStatementId:
+          type: string
+          format: uuid
+        lastStatementDate:
+          type: string
+          format: date-time
+        isPromotionalRate:
+          type: boolean
+        promotionId:
+          type: string
+          format: uuid
+        promotionEndDate:
+          type: string
+          format: date-time
+        interestRate:
+          type: number
+        annualPercentageRate:
+          type: number
+        accruedInterest:
+          type: number
+        lastInterestAccrualDate:
+          type: string
+          format: date-time
+        nextInterestAccrualDate:
+          type: string
+          format: date-time
+        isInGracePeriod:
+          type: boolean
+        gracePeriodEndDate:
+          type: string
+          format: date-time
+        minimumPaymentDue:
+          type: number
+        minimumPaymentDueDate:
+          type: string
+          format: date-time
+        daysPastDue:
+          type: integer
+          format: int32
+        isDelinquent:
+          type: boolean
+        delinquencyStartDate:
+          type: string
+          format: date-time
+        delinquencyDays:
+          type: integer
+          format: int32
+        delinquencyStage:
+          type: string
+        isChargedOff:
+          type: boolean
+        chargeOffDate:
+          type: string
+          format: date-time
+        chargeOffAmount:
+          type: number
+        isWrittenOff:
+          type: boolean
+        writeOffDate:
+          type: string
+          format: date-time
+        writeOffAmount:
+          type: number
+        isInCollection:
+          type: boolean
+        collectionStartDate:
+          type: string
+          format: date-time
+        collectionAgencyId:
+          type: string
+        collectionReference:
+          type: string
+        collectionStatus:
+          type: string
+    CardActivityDTO:
+      required:
+      - accountId
+      - activityReference
+      - activityTimestamp
+      - activityType
+      - cardId
+      - isAgentInitiated
+      - isNotificationSent
+      - isPartyInitiated
+      - isSuccessful
+      - isSystemInitiated
+      - partyId
+      type: object
+      properties:
+        dateCreated:
+          type: string
+          format: date-time
+        dateUpdated:
+          type: string
+          format: date-time
+        activityId:
+          type: string
+          format: uuid
+        cardId:
+          type: string
+          format: uuid
+        partyId:
+          type: string
+          format: uuid
+        accountId:
+          type: string
+          format: uuid
+        activityReference:
+          type: string
+        activityType:
+          type: string
+        activityCategory:
+          type: string
+        activityDescription:
+          type: string
+        activityTimestamp:
+          type: string
+          format: date-time
+        activityChannel:
+          type: string
+        activitySource:
+          type: string
+        activityStatus:
+          type: string
+        activityResult:
+          type: string
+        activityDetails:
+          type: string
+        previousValue:
+          type: string
+        newValue:
+          type: string
+        changeReason:
+          type: string
+        changeAuthorizedBy:
+          type: string
+        ipAddress:
+          type: string
+        deviceId:
+          type: string
+        deviceType:
+          type: string
+        deviceOs:
+          type: string
+        browserType:
+          type: string
+        userAgent:
+          type: string
+        geolocation:
+          type: string
+        isPartyInitiated:
+          type: boolean
+        isSystemInitiated:
+          type: boolean
+        isAgentInitiated:
+          type: boolean
+        agentId:
+          type: string
+        agentName:
+          type: string
+        isSuccessful:
+          type: boolean
+        failureReason:
+          type: string
+        failureCode:
+          type: string
+        isNotificationSent:
+          type: boolean
+        notificationChannel:
+          type: string
+        notificationTimestamp:
+          type: string
+          format: date-time
+        notificationRecipient:
+          type: string
+        relatedEntityType:
+          type: string
+        relatedEntityId:
+          type: string
+          format: uuid
+        notes:
+          type: string
