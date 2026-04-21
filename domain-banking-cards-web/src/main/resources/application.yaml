@@ -1,0 +1,104 @@
+spring:
+  application:
+    name: domain-banking-cards
+    version: 1.0.0
+    description: Domain layer service for banking card orchestration
+    team:
+      name: Firefly Software Solutions Inc
+      email: dev@getfirefly.io
+
+  threads:
+    virtual:
+      enabled: true
+
+firefly:
+  cqrs:
+    enabled: true
+    command:
+      timeout: 30s
+      metrics-enabled: true
+      tracing-enabled: true
+    query:
+      timeout: 15s
+      caching-enabled: true
+      cache-ttl: 15m
+  saga:
+    performance:
+      enabled: true
+  eda:
+    enabled: true
+    default-publisher-type: KAFKA
+    default-connection-id: default
+    publishers:
+      kafka:
+        default:
+          enabled: true
+          default-topic: domain-layer
+          bootstrap-servers: localhost:9092
+  stepevents:
+    enabled: true
+
+api-configuration:
+  core-banking:
+    cards:
+      base-path: http://localhost:8081
+  core-lending:
+    credit-cards:
+      base-path: http://localhost:8082
+
+server:
+  address: ${SERVER_ADDRESS:localhost}
+  port: ${SERVER_PORT:8080}
+  shutdown: graceful
+
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    tagsSorter: alpha
+    operationsSorter: method
+    docExpansion: none
+    filter: true
+  packages-to-scan: com.firefly.domain.banking.cards.web.controllers
+  paths-to-match: /api/**
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+      probes:
+        enabled: true
+  health:
+    livenessState:
+      enabled: true
+    readinessState:
+      enabled: true
+
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+logging:
+  level:
+    com.firefly: DEBUG
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+logging:
+  level:
+    com.firefly: WARN
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
