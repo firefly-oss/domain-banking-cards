@@ -40,7 +40,7 @@ public class ActivateCardSaga {
 
     @SagaStep(id = "sendWelcomeNotification", dependsOn = "activateCard")
     @StepEvent(type = "card.activation.notified")
-    public Mono<Void> sendWelcomeNotification(ActivateCardCommand cmd, ExecutionContext ctx) {
-        return Mono.empty();
+    public Mono<String> sendWelcomeNotification(ActivateCardCommand cmd, ExecutionContext ctx) {
+        return Mono.just("skipped");
     }
 }

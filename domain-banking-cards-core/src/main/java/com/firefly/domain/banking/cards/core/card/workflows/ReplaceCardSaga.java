@@ -44,20 +44,20 @@ public class ReplaceCardSaga {
 
     @SagaStep(id = STEP_TRANSFER_LIMITS, dependsOn = STEP_CREATE_REPLACEMENT)
     @StepEvent(type = EVENT_LIMITS_TRANSFERRED)
-    public Mono<Void> transferLimits(ReplaceCardCommand cmd, ExecutionContext ctx) {
+    public Mono<String> transferLimits(ReplaceCardCommand cmd, ExecutionContext ctx) {
         if (!cmd.isTransferLimits()) {
-            return Mono.empty();
+            return Mono.just("skipped");
         }
-        return Mono.empty();
+        return Mono.just("skipped");
     }
 
     @SagaStep(id = STEP_TRANSFER_SECURITY, dependsOn = STEP_CREATE_REPLACEMENT)
     @StepEvent(type = EVENT_SECURITY_TRANSFERRED)
-    public Mono<Void> transferSecuritySettings(ReplaceCardCommand cmd, ExecutionContext ctx) {
+    public Mono<String> transferSecuritySettings(ReplaceCardCommand cmd, ExecutionContext ctx) {
         if (!cmd.isTransferSecuritySettings()) {
-            return Mono.empty();
+            return Mono.just("skipped");
         }
-        return Mono.empty();
+        return Mono.just("skipped");
     }
 
     @SagaStep(id = STEP_CANCEL_OLD_CARD, compensate = COMPENSATE_RESTORE_OLD_CARD, dependsOn = {STEP_TRANSFER_LIMITS, STEP_TRANSFER_SECURITY})
@@ -76,7 +76,7 @@ public class ReplaceCardSaga {
 
     @SagaStep(id = STEP_ORDER_PHYSICAL, dependsOn = STEP_CANCEL_OLD_CARD)
     @StepEvent(type = EVENT_PHYSICAL_ORDERED)
-    public Mono<Void> orderPhysicalReplacement(ReplaceCardCommand cmd, ExecutionContext ctx) {
-        return Mono.empty();
+    public Mono<String> orderPhysicalReplacement(ReplaceCardCommand cmd, ExecutionContext ctx) {
+        return Mono.just("skipped");
     }
 }

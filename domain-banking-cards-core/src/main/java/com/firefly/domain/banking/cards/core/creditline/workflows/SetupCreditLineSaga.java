@@ -48,13 +48,13 @@ public class SetupCreditLineSaga {
 
     @SagaStep(id = "setupBillingCycle", dependsOn = "createRevolvingLine")
     @StepEvent(type = "creditline.billing.setup")
-    public Mono<Void> setupBillingCycle(SetupCreditLineCommand cmd, ExecutionContext ctx) {
-        return Mono.empty();
+    public Mono<String> setupBillingCycle(SetupCreditLineCommand cmd, ExecutionContext ctx) {
+        return Mono.just("skipped");
     }
 
     @SagaStep(id = "notifyCustomer", dependsOn = "setupBillingCycle")
     @StepEvent(type = "creditline.notified")
-    public Mono<Void> notifyCustomer(SetupCreditLineCommand cmd, ExecutionContext ctx) {
-        return Mono.empty();
+    public Mono<String> notifyCustomer(SetupCreditLineCommand cmd, ExecutionContext ctx) {
+        return Mono.just("skipped");
     }
 }

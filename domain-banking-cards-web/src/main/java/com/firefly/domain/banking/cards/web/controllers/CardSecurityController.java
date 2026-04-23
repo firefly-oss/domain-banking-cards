@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
@@ -33,6 +34,11 @@ public class CardSecurityController {
                 .enabled(command.isEnabled())
                 .build();
         return cardService.updateSecuritySettings(fullCommand)
-                .thenReturn(ResponseEntity.noContent().build());
+                .map(result -> {
+                    if (result.isSuccess()) {
+                        return ResponseEntity.noContent().<Void>build();
+                    }
+                    return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).<Void>build();
+                });
     }
 }

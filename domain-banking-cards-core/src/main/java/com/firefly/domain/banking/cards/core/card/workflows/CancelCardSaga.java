@@ -30,8 +30,8 @@ public class CancelCardSaga {
 
     @SagaStep(id = "settleOutstanding", dependsOn = "validateCard")
     @StepEvent(type = "card.outstanding.settled")
-    public Mono<Void> settleOutstanding(CancelCardCommand cmd, ExecutionContext ctx) {
-        return Mono.empty();
+    public Mono<String> settleOutstanding(CancelCardCommand cmd, ExecutionContext ctx) {
+        return Mono.just("skipped");
     }
 
     @SagaStep(id = "cancelCard", dependsOn = "settleOutstanding")
@@ -42,7 +42,7 @@ public class CancelCardSaga {
 
     @SagaStep(id = "notifyCustomer", dependsOn = "cancelCard")
     @StepEvent(type = "card.cancel.notified")
-    public Mono<Void> notifyCustomer(CancelCardCommand cmd, ExecutionContext ctx) {
-        return Mono.empty();
+    public Mono<String> notifyCustomer(CancelCardCommand cmd, ExecutionContext ctx) {
+        return Mono.just("skipped");
     }
 }

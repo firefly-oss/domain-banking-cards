@@ -37,6 +37,13 @@ firefly:
           bootstrap-servers: localhost:9092
   stepevents:
     enabled: true
+  ledger:
+    gl:
+      card-auth-suspense-account-id: ${FIREFLY_LEDGER_GL_CARD_AUTH_SUSPENSE_ACCOUNT_ID:}
+      merchant-settlement-account-id: ${FIREFLY_LEDGER_GL_MERCHANT_SETTLEMENT_ACCOUNT_ID:}
+      credit-card-receivable-account-id: ${FIREFLY_LEDGER_GL_CREDIT_CARD_RECEIVABLE_ACCOUNT_ID:}
+      fee-income-account-id: ${FIREFLY_LEDGER_GL_FEE_INCOME_ACCOUNT_ID:}
+      interest-income-account-id: ${FIREFLY_LEDGER_GL_INTEREST_INCOME_ACCOUNT_ID:}
 
 api-configuration:
   core-banking:
@@ -45,6 +52,9 @@ api-configuration:
   core-lending:
     credit-cards:
       base-path: http://localhost:8082
+  core-platform:
+    banking-ledger:
+      base-path: http://localhost:8083
 
 server:
   address: ${SERVER_ADDRESS:localhost}

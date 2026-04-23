@@ -46,7 +46,7 @@ public class UnblockCardSaga {
 
     @SagaStep(id = "notifyCustomer", dependsOn = "unblockCard")
     @StepEvent(type = "card.unblock.notified")
-    public Mono<Void> notifyCustomer(UnblockCardCommand cmd, ExecutionContext ctx) {
-        return Mono.empty();
+    public Mono<String> notifyCustomer(UnblockCardCommand cmd, ExecutionContext ctx) {
+        return Mono.just("skipped");
     }
 }

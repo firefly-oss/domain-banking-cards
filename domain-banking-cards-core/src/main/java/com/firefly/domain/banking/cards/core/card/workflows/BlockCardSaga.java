@@ -48,7 +48,7 @@ public class BlockCardSaga {
 
     @SagaStep(id = STEP_NOTIFY_CUSTOMER, dependsOn = STEP_BLOCK_CARD)
     @StepEvent(type = EVENT_CUSTOMER_NOTIFIED)
-    public Mono<Void> notifyCustomer(BlockCardCommand cmd, ExecutionContext ctx) {
-        return Mono.empty();
+    public Mono<String> notifyCustomer(BlockCardCommand cmd, ExecutionContext ctx) {
+        return Mono.just("skipped");
     }
 }

@@ -21,6 +21,10 @@
             <groupId>com.firefly</groupId>
             <artifactId>core-lending-credit-cards-sdk</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.firefly</groupId>
+            <artifactId>core-banking-ledger-sdk</artifactId>
+        </dependency>
 
         <!-- Framework -->
         <dependency>

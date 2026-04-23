@@ -8,6 +8,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.fireflyframework.orchestration.saga.engine.SagaResult;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
@@ -20,6 +22,9 @@ import java.util.UUID;
 @Tag(name = "Cards", description = "Card lifecycle management - issue, activate, block, replace, and cancel cards")
 public class CardsController {
 
+    private static final String STATUS_COMPLETED = "COMPLETED";
+    private static final String STATUS_FAILED = "FAILED";
+
     private final CardService cardService;
 
     @PostMapping
@@ -28,11 +33,13 @@ public class CardsController {
         return cardService.issueCard(command)
                 .map(result -> {
                     UUID cardId = result.resultOf("createCard", UUID.class).orElse(null);
-                    return ResponseEntity.ok(IssueCardResponse.builder()
+                    IssueCardResponse body = IssueCardResponse.builder()
                             .cardId(cardId)
                             .executionId(result.correlationId())
-                            .status(result.isSuccess() ? "COMPLETED" : "FAILED")
-                            .build());
+                            .status(result.isSuccess() ? STATUS_COMPLETED : STATUS_FAILED)
+                            .build();
+                    HttpStatus status = result.isSuccess() ? HttpStatus.OK : HttpStatus.UNPROCESSABLE_ENTITY;
+                    return ResponseEntity.status(status).body(body);
                 });
     }
 
@@ -46,7 +53,7 @@ public class CardsController {
                 .activationCode(activationCode)
                 .build();
         return cardService.activateCard(command)
-                .thenReturn(ResponseEntity.noContent().build());
+                .map(CardsController::toVoidResponse);
     }
 
     @PostMapping("/{cardId}/block")
@@ -61,7 +68,7 @@ public class CardsController {
                 .blockedBy(blockedBy)
                 .build();
         return cardService.blockCard(command)
-                .thenReturn(ResponseEntity.noContent().build());
+                .map(CardsController::toVoidResponse);
     }
 
     @PostMapping("/{cardId}/unblock")
@@ -74,7 +81,7 @@ public class CardsController {
                 .unblockedBy(unblockedBy)
                 .build();
         return cardService.unblockCard(command)
-                .thenReturn(ResponseEntity.noContent().build());
+                .map(CardsController::toVoidResponse);
     }
 
     @PostMapping("/{cardId}/replace")
@@ -93,12 +100,14 @@ public class CardsController {
         return cardService.replaceCard(command)
                 .map(result -> {
                     UUID newCardId = result.resultOf("createReplacementCard", UUID.class).orElse(null);
-                    return ResponseEntity.ok(ReplaceCardResponse.builder()
+                    ReplaceCardResponse body = ReplaceCardResponse.builder()
                             .oldCardId(cardId)
                             .newCardId(newCardId)
                             .executionId(result.correlationId())
-                            .status(result.isSuccess() ? "COMPLETED" : "FAILED")
-                            .build());
+                            .status(result.isSuccess() ? STATUS_COMPLETED : STATUS_FAILED)
+                            .build();
+                    HttpStatus status = result.isSuccess() ? HttpStatus.OK : HttpStatus.UNPROCESSABLE_ENTITY;
+                    return ResponseEntity.status(status).body(body);
                 });
     }
 
@@ -114,6 +123,17 @@ public class CardsController {
                 .cancelledBy(cancelledBy)
                 .build();
         return cardService.cancelCard(command)
-                .thenReturn(ResponseEntity.noContent().build());
+                .map(CardsController::toVoidResponse);
+    }
+
+    /**
+     * Maps a saga outcome to an HTTP response for endpoints that do not return a body.
+     * Success → 204 No Content. Failure → 422 Unprocessable Entity.
+     */
+    private static ResponseEntity<Void> toVoidResponse(SagaResult result) {
+        if (result.isSuccess()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).build();
     }
 }

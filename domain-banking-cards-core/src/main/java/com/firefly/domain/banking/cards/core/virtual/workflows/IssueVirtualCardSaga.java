@@ -48,13 +48,13 @@ public class IssueVirtualCardSaga {
 
     @SagaStep(id = "setupVirtualCardLimits", dependsOn = "createVirtualCard")
     @StepEvent(type = "virtualcard.limits.setup")
-    public Mono<Void> setupVirtualCardLimits(IssueVirtualCardCommand cmd, ExecutionContext ctx) {
-        return Mono.empty();
+    public Mono<String> setupVirtualCardLimits(IssueVirtualCardCommand cmd, ExecutionContext ctx) {
+        return Mono.just("skipped");
     }
 
     @SagaStep(id = "notifyCustomer", dependsOn = "setupVirtualCardLimits")
     @StepEvent(type = "virtualcard.notified")
-    public Mono<Void> notifyCustomer(IssueVirtualCardCommand cmd, ExecutionContext ctx) {
-        return Mono.empty();
+    public Mono<String> notifyCustomer(IssueVirtualCardCommand cmd, ExecutionContext ctx) {
+        return Mono.just("skipped");
     }
 }

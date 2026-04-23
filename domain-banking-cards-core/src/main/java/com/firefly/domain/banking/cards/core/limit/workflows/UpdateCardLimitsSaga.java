@@ -51,7 +51,7 @@ public class UpdateCardLimitsSaga {
 
     @SagaStep(id = "notifyLimitChange", dependsOn = "updateLimits")
     @StepEvent(type = "card.limits.change.notified")
-    public Mono<Void> notifyLimitChange(UpdateCardLimitsCommand cmd, ExecutionContext ctx) {
-        return Mono.empty();
+    public Mono<String> notifyLimitChange(UpdateCardLimitsCommand cmd, ExecutionContext ctx) {
+        return Mono.just("skipped");
     }
 }

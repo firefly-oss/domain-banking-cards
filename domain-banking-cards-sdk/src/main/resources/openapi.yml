@@ -19,6 +19,9 @@ tags:
   description: Credit card revolving line management
 - name: Card Backoffice
   description: Administrative operations for card management
+- name: Card Transactions
+  description: "Card-transaction sagas — authorization, clearing, reversal, disputes,\
+    \ statement payments, interest accrual, and fees"
 paths:
   /api/v1/cards/{cardId}/security/{securitySettingId}:
     put:
@@ -243,6 +246,163 @@ paths:
       responses:
         "200":
           description: OK
+  /api/v1/cards/{cardId}/transactions/{transactionId}/reversal:
+    post:
+      tags:
+      - Card Transactions
+      summary: Reverse a card authorization
+      description: "Voids a pending card authorization — posts a REVERSAL against\
+        \ the PENDING ledger hold, marks the card_transaction as REVERSED, and refreshes\
+        \ the balance."
+      operationId: reverseCardAuthorization
+      parameters:
+      - name: cardId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: transactionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReverseCardAuthorizationCommand"
+        required: true
+      responses:
+        "200":
+          description: Reversal accepted
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CardTransactionSagaResponse"
+        "404":
+          description: Card transaction or authorization not found
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CardTransactionSagaResponse"
+  /api/v1/cards/{cardId}/transactions/{transactionId}/clearing:
+    post:
+      tags:
+      - Card Transactions
+      summary: Clear a card transaction
+      description: "Finalizes a previously-authorized card transaction — transitions\
+        \ the PENDING ledger hold to POSTED (or REVERSAL + new POSTED when the cleared\
+        \ amount differs), marks card_transaction as COMPLETED, and refreshes the\
+        \ card-balance projection."
+      operationId: clearCardTransaction
+      parameters:
+      - name: cardId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: transactionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClearCardTransactionCommand"
+        required: true
+      responses:
+        "200":
+          description: Clearing processed
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CardTransactionSagaResponse"
+        "404":
+          description: Card transaction or authorization not found
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CardTransactionSagaResponse"
+        "409":
+          description: Duplicate clearing reference
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CardTransactionSagaResponse"
+  /api/v1/cards/{cardId}/statements/{statementId}/payments:
+    post:
+      tags:
+      - Card Transactions
+      summary: Post a credit-card statement payment
+      description: "Creates a PENDING card payment, posts a TRANSFER ledger transaction\
+        \ (DEBIT funding account, CREDIT credit-card receivable GL), marks the payment\
+        \ as COMPLETED, and refreshes the card balance projection."
+      operationId: postCardStatementPayment
+      parameters:
+      - name: cardId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: statementId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PostCardStatementPaymentCommand"
+        required: true
+      responses:
+        "200":
+          description: Payment accepted
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CardTransactionSagaResponse"
+        "400":
+          description: Invalid payment request
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CardTransactionSagaResponse"
+        "409":
+          description: Duplicate payment reference
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CardTransactionSagaResponse"
   /api/v1/cards/{cardId}/replace:
     post:
       tags:
@@ -288,6 +448,144 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/ReplaceCardResponse"
+  /api/v1/cards/{cardId}/interest-accrual:
+    post:
+      tags:
+      - Card Transactions
+      summary: Accrue interest on a credit-card statement
+      description: Posts an INTEREST ledger transaction — DEBIT cardholder account
+        / CREDIT interest-income GL — for a single statement period. Typically invoked
+        by a batch/scheduler.
+      operationId: accrueCardInterest
+      parameters:
+      - name: cardId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AccrueCardInterestCommand"
+        required: true
+      responses:
+        "200":
+          description: Interest accrual posted
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CardTransactionSagaResponse"
+        "409":
+          description: Duplicate accrual for the same saga
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CardTransactionSagaResponse"
+  /api/v1/cards/{cardId}/fees:
+    post:
+      tags:
+      - Card Transactions
+      summary: Charge a card fee
+      description: "Posts a FEE ledger transaction (annual, late-payment, cash advance,\
+        \ foreign-transaction). When the fee is waived the ledger post is skipped."
+      operationId: chargeCardFee
+      parameters:
+      - name: cardId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChargeCardFeeCommand"
+        required: true
+      responses:
+        "200":
+          description: Fee processed
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CardTransactionSagaResponse"
+        "409":
+          description: Duplicate fee for the same saga
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CardTransactionSagaResponse"
+  /api/v1/cards/{cardId}/disputes/{disputeId}/resolution:
+    post:
+      tags:
+      - Card Transactions
+      summary: Resolve a card dispute
+      description: "Posts the chargeback ledger transaction (credit cardholder, debit\
+        \ merchant settlement GL), updates the dispute status to RESOLVED, and refreshes\
+        \ the card balance. Supports APPROVED_CARDHOLDER / APPROVED_MERCHANT / SPLIT\
+        \ outcomes."
+      operationId: resolveCardDispute
+      parameters:
+      - name: cardId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: disputeId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResolveCardDisputeCommand"
+        required: true
+      responses:
+        "200":
+          description: Dispute resolved
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CardTransactionSagaResponse"
+        "404":
+          description: Dispute not found
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CardTransactionSagaResponse"
+        "409":
+          description: Duplicate resolution reference
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CardTransactionSagaResponse"
   /api/v1/cards/{cardId}/credit-line:
     post:
       tags:
@@ -392,6 +690,54 @@ paths:
       responses:
         "200":
           description: OK
+  /api/v1/cards/{cardId}/authorizations:
+    post:
+      tags:
+      - Card Transactions
+      summary: Authorize a card transaction
+      description: "Creates a PENDING card_transaction, places a PENDING ledger hold\
+        \ on the underlying account, and updates the pending-authorizations projection\
+        \ on the card balance."
+      operationId: authorizeCardTransaction
+      parameters:
+      - name: cardId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthorizeCardTransactionCommand"
+        required: true
+      responses:
+        "200":
+          description: Authorization accepted
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CardTransactionSagaResponse"
+        "400":
+          description: Invalid authorization request
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CardTransactionSagaResponse"
+        "409":
+          description: Duplicate authorization reference
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CardTransactionSagaResponse"
   /api/v1/cards/{cardId}/activate:
     post:
       tags:
@@ -786,6 +1132,25 @@ components:
           type: string
         currency:
           type: string
+        cardNetworkId:
+          type: string
+          format: uuid
+        issuerId:
+          type: string
+          format: uuid
+        binId:
+          type: string
+          format: uuid
+        cardHolderName:
+          type: string
+        cardHolderId:
+          type: string
+        isPhysical:
+          type: boolean
+        isVirtual:
+          type: boolean
+        isPrimary:
+          type: boolean
     IssueCardResponse:
       type: object
       properties:
@@ -827,6 +1192,73 @@ components:
           type: string
         status:
           type: string
+    ReverseCardAuthorizationCommand:
+      type: object
+      properties:
+        cardId:
+          type: string
+          format: uuid
+        cardTransactionId:
+          type: string
+          format: uuid
+        reason:
+          type: string
+        reversalReference:
+          type: string
+    CardTransactionSagaResponse:
+      type: object
+      properties:
+        cardId:
+          type: string
+          format: uuid
+        cardTransactionId:
+          type: string
+          format: uuid
+        ledgerTransactionId:
+          type: string
+          format: uuid
+        executionId:
+          type: string
+        status:
+          type: string
+    ClearCardTransactionCommand:
+      type: object
+      properties:
+        cardId:
+          type: string
+          format: uuid
+        cardTransactionId:
+          type: string
+          format: uuid
+        clearedAmount:
+          type: number
+        settlementTimestamp:
+          type: string
+          format: date-time
+        networkClearingReference:
+          type: string
+    PostCardStatementPaymentCommand:
+      type: object
+      properties:
+        cardId:
+          type: string
+          format: uuid
+        fundingAccountId:
+          type: string
+          format: uuid
+        statementId:
+          type: string
+          format: uuid
+        paymentAmount:
+          type: number
+        currency:
+          type: string
+        isAutoPayment:
+          type: boolean
+        isFullPayment:
+          type: boolean
+        paymentReference:
+          type: string
     ReplaceCardResponse:
       type: object
       properties:
@@ -839,6 +1271,57 @@ components:
         executionId:
           type: string
         status:
+          type: string
+    AccrueCardInterestCommand:
+      type: object
+      properties:
+        cardId:
+          type: string
+          format: uuid
+        interestAmount:
+          type: number
+        interestRate:
+          type: number
+        periodStart:
+          type: string
+          format: date
+        periodEnd:
+          type: string
+          format: date
+        calculationMethod:
+          type: string
+    ChargeCardFeeCommand:
+      type: object
+      properties:
+        cardId:
+          type: string
+          format: uuid
+        feeType:
+          type: string
+        feeAmount:
+          type: number
+        feeCalculationMethod:
+          type: string
+        waived:
+          type: boolean
+        waiverReason:
+          type: string
+    ResolveCardDisputeCommand:
+      type: object
+      properties:
+        cardId:
+          type: string
+          format: uuid
+        disputeId:
+          type: string
+          format: uuid
+        resolutionOutcome:
+          type: string
+        creditAmount:
+          type: number
+        debitAmount:
+          type: number
+        resolutionReference:
           type: string
     SetupCreditLineCommand:
       type: object
@@ -869,6 +1352,36 @@ components:
         executionId:
           type: string
         status:
+          type: string
+    AuthorizeCardTransactionCommand:
+      type: object
+      properties:
+        cardId:
+          type: string
+          format: uuid
+        amount:
+          type: number
+        currency:
+          type: string
+        merchantId:
+          type: string
+        merchantCategoryCode:
+          type: string
+        merchantName:
+          type: string
+        merchantCity:
+          type: string
+        merchantCountry:
+          type: string
+        authorizationCode:
+          type: string
+        posEntryMode:
+          type: string
+        cardPresentFlag:
+          type: boolean
+        currencyConversionRate:
+          type: number
+        externalAuthReference:
           type: string
     CreateVirtualCardRequest:
       type: object

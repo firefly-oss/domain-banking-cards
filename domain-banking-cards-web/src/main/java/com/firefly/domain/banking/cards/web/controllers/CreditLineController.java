@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
@@ -36,13 +37,15 @@ public class CreditLineController {
         return cardService.setupCreditLine(fullCommand)
                 .map(result -> {
                     UUID revolvingLineId = result.resultOf("createRevolvingLine", UUID.class).orElse(null);
-                    return ResponseEntity.ok(CreditLineResponse.builder()
+                    CreditLineResponse body = CreditLineResponse.builder()
                             .revolvingLineId(revolvingLineId)
                             .cardId(cardId)
                             .creditLimit(command.getCreditLimit())
                             .executionId(result.correlationId())
                             .status(result.isSuccess() ? "COMPLETED" : "FAILED")
-                            .build());
+                            .build();
+                    HttpStatus status = result.isSuccess() ? HttpStatus.OK : HttpStatus.UNPROCESSABLE_ENTITY;
+                    return ResponseEntity.status(status).body(body);
                 });
     }
 }

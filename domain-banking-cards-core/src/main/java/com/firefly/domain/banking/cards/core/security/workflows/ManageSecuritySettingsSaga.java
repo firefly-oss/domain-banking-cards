@@ -50,7 +50,7 @@ public class ManageSecuritySettingsSaga {
 
     @SagaStep(id = "notifySecurityChange", dependsOn = "updateSecuritySettings")
     @StepEvent(type = "card.security.change.notified")
-    public Mono<Void> notifySecurityChange(UpdateSecuritySettingsCommand cmd, ExecutionContext ctx) {
-        return Mono.empty();
+    public Mono<String> notifySecurityChange(UpdateSecuritySettingsCommand cmd, ExecutionContext ctx) {
+        return Mono.just("skipped");
     }
 }
