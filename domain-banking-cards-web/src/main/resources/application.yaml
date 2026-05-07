@@ -54,7 +54,7 @@ api-configuration:
       base-path: ${ENDPOINT_CORE_LENDING_CREDIT_CARDS:http://localhost:8082}
   core-platform:
     banking-ledger:
-      base-path: ${ENDPOINT_CORE_PLATFORM_BANKING_LEDGER:http://localhost:8083}
+      base-path: ${ENDPOINT_CORE_BANKING_LEDGER:http://localhost:8083}
 
 server:
   address: ${SERVER_ADDRESS:localhost}
