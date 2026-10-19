@@ -105,6 +105,7 @@ class CardsControllerTest {
         // Given
         UUID cardId = UUID.randomUUID();
         String activationCode = "123456";
+        when(sagaResult.isSuccess()).thenReturn(true);
         when(cardService.activateCard(any(ActivateCardCommand.class)))
                 .thenReturn(Mono.just(sagaResult));
 
@@ -126,6 +127,7 @@ class CardsControllerTest {
         UUID cardId = UUID.randomUUID();
         String reason = "Suspected fraud";
         String blockedBy = "CUSTOMER";
+        when(sagaResult.isSuccess()).thenReturn(true);
         when(cardService.blockCard(any(BlockCardCommand.class)))
                 .thenReturn(Mono.just(sagaResult));
 
@@ -146,6 +148,7 @@ class CardsControllerTest {
         // Given
         UUID cardId = UUID.randomUUID();
         String unblockedBy = "CUSTOMER";
+        when(sagaResult.isSuccess()).thenReturn(true);
         when(cardService.unblockCard(any(UnblockCardCommand.class)))
                 .thenReturn(Mono.just(sagaResult));
 
@@ -201,6 +204,7 @@ class CardsControllerTest {
         UUID cardId = UUID.randomUUID();
         String reason = "Customer request";
         String cancelledBy = "CUSTOMER";
+        when(sagaResult.isSuccess()).thenReturn(true);
         when(cardService.cancelCard(any(CancelCardCommand.class)))
                 .thenReturn(Mono.just(sagaResult));
 
@@ -226,6 +230,7 @@ class CardsControllerTest {
 
         // Verify it works by calling a method
         UUID cardId = UUID.randomUUID();
+        when(sagaResult.isSuccess()).thenReturn(true);
         when(cardService.blockCard(any(BlockCardCommand.class)))
                 .thenReturn(Mono.just(sagaResult));
 
