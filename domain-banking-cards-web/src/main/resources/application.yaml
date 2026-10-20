@@ -71,7 +71,7 @@ springdoc:
     operationsSorter: method
     docExpansion: none
     filter: true
-  packages-to-scan: com.firefly.domain.banking.cards.web.controllers
+  packages-to-scan: io.fireflysoftware.domain.banking.cards.web.controllers
   paths-to-match: /api/**
 
 management:
@@ -97,7 +97,7 @@ spring:
       on-profile: dev
 logging:
   level:
-    com.firefly: DEBUG
+    io.fireflysoftware: DEBUG
 
 ---
 spring:
@@ -106,7 +106,7 @@ spring:
       on-profile: prod
 logging:
   level:
-    com.firefly: WARN
+    io.fireflysoftware: WARN
 springdoc:
   api-docs:
     enabled: false
