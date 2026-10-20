@@ -24,11 +24,11 @@ import org.springframework.web.reactive.config.EnableWebFlux;
         description = "Domain layer service for banking card orchestration - manages card lifecycle, issuance, security, and credit lines",
         contact = @Contact(
             name = "Firefly Software Foundation",
-            email = "dev@getfirefly.io"
+            email = "dev@fireflysoftware.io"
         )
     ),
     servers = {
-        @Server(url = "http://domain.getfirefly.io/domain-banking-cards", description = "Development Environment"),
+        @Server(url = "https://openplatform.fireflysoftware.io/domain-banking-cards", description = "Development Environment"),
         @Server(url = "/", description = "Local Development Environment")
     }
 )
