@@ -10,6 +10,7 @@
     </parent>
 
     <artifactId>domain-banking-cards-interfaces</artifactId>
+    <name>domain-banking-cards-interfaces</name>
 
     <dependencies>
         <dependency>

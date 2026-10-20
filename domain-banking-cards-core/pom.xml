@@ -10,6 +10,7 @@
     </parent>
 
     <artifactId>domain-banking-cards-core</artifactId>
+    <name>domain-banking-cards-core</name>
 
     <dependencies>
         <!-- Internal modules -->

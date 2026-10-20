@@ -10,6 +10,7 @@
     </parent>
 
     <artifactId>domain-banking-cards-infra</artifactId>
+    <name>domain-banking-cards-infra</name>
 
     <dependencies>
         <!-- Core SDKs -->

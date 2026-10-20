@@ -10,6 +10,7 @@
     </parent>
 
     <artifactId>domain-banking-cards-web</artifactId>
+    <name>domain-banking-cards-web</name>
 
     <properties>
         <openapi.gen.skip>false</openapi.gen.skip>

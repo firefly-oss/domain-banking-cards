@@ -12,6 +12,7 @@
     </parent>
 
     <artifactId>domain-banking-cards</artifactId>
+    <name>domain-banking-cards</name>
     <version>26.10.3</version>
     <packaging>pom</packaging>
 
