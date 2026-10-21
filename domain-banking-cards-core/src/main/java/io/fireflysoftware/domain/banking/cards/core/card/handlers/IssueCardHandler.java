@@ -20,6 +20,7 @@ package io.fireflysoftware.domain.banking.cards.core.card.handlers;
 import io.fireflysoftware.core.banking.cards.sdk.api.CardsApi;
 import io.fireflysoftware.core.banking.cards.sdk.model.CardDTO;
 import io.fireflysoftware.domain.banking.cards.core.card.commands.IssueCardCommand;
+import io.fireflysoftware.domain.banking.cards.core.card.parameters.CardJourneyParameterPort;
 import org.fireflyframework.cqrs.command.CommandHandler;
 import org.fireflyframework.cqrs.annotations.CommandHandlerComponent;
 import reactor.core.publisher.Mono;
@@ -59,16 +60,20 @@ import java.util.UUID;
 @CommandHandlerComponent
 public class IssueCardHandler extends CommandHandler<IssueCardCommand, UUID> {
 
-    private static final int DEFAULT_CARD_TENURE_YEARS = 4;
-
     private final CardsApi cardsApi;
+    private final CardJourneyParameterPort parameters;
 
-    public IssueCardHandler(CardsApi cardsApi) {
+    public IssueCardHandler(CardsApi cardsApi, CardJourneyParameterPort parameters) {
         this.cardsApi = cardsApi;
+        this.parameters = parameters;
     }
 
     @Override
     protected Mono<UUID> doHandle(IssueCardCommand cmd) {
+        return parameters.issuanceDefaults().flatMap(defaults -> issue(cmd, defaults));
+    }
+
+    private Mono<UUID> issue(IssueCardCommand cmd, CardJourneyParameterPort.CardIssuanceDefaults defaults) {
         CardDTO cardDTO = new CardDTO();
 
         // Caller-supplied identity.
@@ -82,9 +87,9 @@ public class IssueCardHandler extends CommandHandler<IssueCardCommand, UUID> {
         cardDTO.setIssuerId(cmd.getIssuerId());
         cardDTO.setBinId(cmd.getBinId());
 
-        // Currency — prefer explicit currency on the command, fall back to EUR for the
-        // Firefly reference bank.
-        cardDTO.setCurrencyCode(cmd.getCurrency() == null ? "EUR" : cmd.getCurrency());
+        // Currency — prefer the caller value. Otherwise use the configured default, which is EUR in the sandbox.
+        String currency = cmd.getCurrency() == null ? defaults.currencyCode() : cmd.getCurrency();
+        cardDTO.setCurrencyCode(currency);
 
         // Cardholder — the domain layer accepts caller-supplied cardholder identity and
         // falls back to the partyId when the caller does not resolve it upstream. The
@@ -98,8 +103,7 @@ public class IssueCardHandler extends CommandHandler<IssueCardCommand, UUID> {
                 : cmd.getCardHolderName());
         cardDTO.setCardNumber(luhnPan(cmd.getCustomerId(), cmd.getAccountId()));
 
-        // Expiration — +4 years from today.
-        LocalDate expiry = LocalDate.now().plusYears(DEFAULT_CARD_TENURE_YEARS);
+        LocalDate expiry = LocalDate.now().plusYears(defaults.tenureYears());
         cardDTO.setExpirationMonth(expiry.getMonthValue());
         cardDTO.setExpirationYear(expiry.getYear());
 

@@ -37,6 +37,10 @@ firefly:
           bootstrap-servers: localhost:9092
   stepevents:
     enabled: true
+  cards:
+    parameters:
+      adapter: ${FIREFLY_CARDS_PARAMETERS_ADAPTER:sandbox}
+      configuration-base-url: ${ENDPOINT_DOMAIN_CONFIGURATION:http://localhost:8088}
   ledger:
     gl:
       card-auth-suspense-account-id: ${FIREFLY_LEDGER_GL_CARD_AUTH_SUSPENSE_ACCOUNT_ID:}
