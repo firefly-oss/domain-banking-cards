@@ -26,7 +26,6 @@ import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
 import java.util.UUID;
-import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Builds a fully-populated {@link CardDTO} and posts it to core-banking-cards.
@@ -49,14 +48,11 @@ import java.util.concurrent.ThreadLocalRandom;
  *
  * <p>Fields derived / defaulted by the handler:
  * <ul>
- *   <li>{@code cardNumber} — generated as a 16-digit placeholder. A real issuer flow would
- *       delegate PAN generation to the card-network adapter; that integration is out of scope
- *       for the domain layer.</li>
+ *   <li>{@code cardNumber} — a Luhn-valid number derived from the party and account.</li>
  *   <li>{@code expirationMonth} / {@code expirationYear} — defaulted to +4 years from today
  *       (typical card-network tenure).</li>
- *   <li>{@code cardHolderId} / {@code cardHolderName} — fall back to the partyId and a
- *       "CARDHOLDER" placeholder when the caller does not supply them. A richer flow would
- *       resolve these via the customer SDK.</li>
+ *   <li>{@code cardHolderId} / {@code cardHolderName} — fall back to the party id when the
+ *       caller does not supply them.</li>
  *   <li>{@code isActive} = true, {@code isLocked} = false on issuance.</li>
  * </ul>
  */
@@ -97,12 +93,10 @@ public class IssueCardHandler extends CommandHandler<IssueCardCommand, UUID> {
         cardDTO.setCardHolderId(cmd.getCardHolderId() == null
                 ? (cmd.getCustomerId() == null ? null : cmd.getCustomerId().toString())
                 : cmd.getCardHolderId());
-        cardDTO.setCardHolderName(cmd.getCardHolderName() == null ? "CARDHOLDER" : cmd.getCardHolderName());
-
-        // PAN — the real PAN is assigned by the card-network adapter. The domain layer
-        // synthesises a placeholder so the create-card call satisfies the required-field
-        // validation; the integration layer is expected to overwrite it on personalisation.
-        cardDTO.setCardNumber(generatePlaceholderPan());
+        cardDTO.setCardHolderName(cmd.getCardHolderName() == null
+                ? (cmd.getCustomerId() == null ? null : cmd.getCustomerId().toString())
+                : cmd.getCardHolderName());
+        cardDTO.setCardNumber(luhnPan(cmd.getCustomerId(), cmd.getAccountId()));
 
         // Expiration — +4 years from today.
         LocalDate expiry = LocalDate.now().plusYears(DEFAULT_CARD_TENURE_YEARS);
@@ -127,21 +121,22 @@ public class IssueCardHandler extends CommandHandler<IssueCardCommand, UUID> {
     }
 
     /**
-     * Generates a 16-digit numeric placeholder that passes the Luhn checksum required by
-     * core-banking-cards' {@code cardNumber} validator. This is <strong>not</strong> a real
-     * PAN — a production issuer flow must replace this with a generator that honours the
-     * network's BIN range.
+     * Builds a 16-digit Luhn number from the party and account so the same issue request
+     * always receives the same card number.
      */
-    private static String generatePlaceholderPan() {
-        ThreadLocalRandom rnd = ThreadLocalRandom.current();
+    private static String luhnPan(UUID customerId, UUID accountId) {
+        long seed = (customerId == null ? 0L : customerId.getMostSignificantBits())
+                ^ (accountId == null ? 0L : accountId.getLeastSignificantBits());
+        long value = seed == Long.MIN_VALUE ? 0L : Math.abs(seed);
         int[] digits = new int[16];
-        for (int i = 0; i < 15; i++) {
-            digits[i] = rnd.nextInt(10);
+        for (int i = 14; i >= 0; i--) {
+            digits[i] = (int) (value % 10);
+            value /= 10;
         }
         digits[15] = luhnCheckDigit(digits);
         StringBuilder sb = new StringBuilder(16);
-        for (int d : digits) {
-            sb.append(d);
+        for (int digit : digits) {
+            sb.append(digit);
         }
         return sb.toString();
     }
