@@ -16,11 +16,12 @@
 
 package io.fireflysoftware.domain.banking.cards.core.card.parameters;
 
+import io.fireflysoftware.common.config.sdk.api.EnvironmentConfigurationsApi;
+import io.fireflysoftware.common.config.sdk.invoker.ApiClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.reactive.function.client.WebClient;
 
 @Configuration
 public class CardJourneyParameterConfiguration {
@@ -41,7 +42,10 @@ public class CardJourneyParameterConfiguration {
             name = "adapter",
             havingValue = "configuration")
     public CardJourneyParameterPort configurationCardJourneyParameterPort(
-            @Value("${firefly.cards.parameters.configuration-base-url:http://localhost:8088}") String baseUrl) {
-        return new ConfigurationCardJourneyParameterAdapter(WebClient.builder().baseUrl(baseUrl).build());
+            @Value("${firefly.cards.parameters.core-base-url:${ENDPOINT_CORE_CONFIG_MGMT:http://localhost:8080}}") String baseUrl) {
+        ApiClient client = new ApiClient();
+        String trimmed = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
+        client.setBasePath(trimmed);
+        return new ConfigurationCardJourneyParameterAdapter(new EnvironmentConfigurationsApi(client));
     }
 }

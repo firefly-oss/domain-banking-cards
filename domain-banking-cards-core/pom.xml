@@ -22,6 +22,10 @@
             <groupId>io.fireflysoftware</groupId>
             <artifactId>domain-banking-cards-infra</artifactId>
         </dependency>
+        <dependency>
+            <groupId>io.fireflysoftware</groupId>
+            <artifactId>core-common-config-mgmt-sdk</artifactId>
+        </dependency>
 
         <!-- Framework -->
         <dependency>

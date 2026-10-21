@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Firefly Software Foundation
+ * Copyright 2026 Firefly Software Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,22 +16,22 @@
 
 package io.fireflysoftware.domain.banking.cards.core.card.parameters;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.web.reactive.function.client.WebClient;
+import io.fireflysoftware.common.config.sdk.api.EnvironmentConfigurationsApi;
+import io.fireflysoftware.common.config.sdk.model.EnvironmentConfigDTO;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+import java.util.UUID;
+
 /**
- * Reads card issuance defaults from domain-core-configuration.
- * An installer selects this class in place of {@link SandboxCardJourneyParameterAdapter}.
+ * Reads card issuance defaults from core-common-config-mgmt.
  */
 public final class ConfigurationCardJourneyParameterAdapter implements CardJourneyParameterPort {
 
-    private final WebClient webClient;
-    private final ObjectMapper mapper = new ObjectMapper();
+    private final EnvironmentConfigurationsApi environments;
 
-    public ConfigurationCardJourneyParameterAdapter(WebClient webClient) {
-        this.webClient = webClient;
+    public ConfigurationCardJourneyParameterAdapter(EnvironmentConfigurationsApi environments) {
+        this.environments = environments;
     }
 
     @Override
@@ -42,18 +42,15 @@ public final class ConfigurationCardJourneyParameterAdapter implements CardJourn
     }
 
     private Mono<String> read(String key) {
-        return webClient.get()
-                .uri("/api/v1/parameters/by-key/{key}", key)
-                .retrieve()
-                .bodyToMono(String.class)
-                .map(this::value);
-    }
-
-    private String value(String json) {
-        try {
-            return mapper.readTree(json).path("value").asText();
-        } catch (JsonProcessingException ex) {
-            throw new IllegalArgumentException("Configuration response was not JSON");
-        }
+        return environments.filterEnvironmentConfigs(0, 200, null, null, null, null, UUID.randomUUID().toString())
+                .flatMap(page -> {
+                    List<EnvironmentConfigDTO> rows = page.getContent() == null ? List.of() : page.getContent();
+                    for (EnvironmentConfigDTO row : rows) {
+                        if (key.equals(row.getConfigKey()) && row.getConfigValue() != null && !row.getConfigValue().isBlank()) {
+                            return Mono.just(row.getConfigValue());
+                        }
+                    }
+                    return Mono.error(new IllegalArgumentException("Parameter " + key + " was not found"));
+                });
     }
 }
