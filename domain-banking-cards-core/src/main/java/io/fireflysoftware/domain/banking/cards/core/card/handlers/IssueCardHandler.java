@@ -60,6 +60,10 @@ import java.util.UUID;
 @CommandHandlerComponent
 public class IssueCardHandler extends CommandHandler<IssueCardCommand, UUID> {
 
+    private static final UUID DEFAULT_ISSUER = UUID.fromString("10000000-0000-4000-8000-0000000000c1");
+    private static final UUID DEFAULT_NETWORK = UUID.fromString("10000000-0000-4000-8000-0000000000c2");
+    private static final UUID DEFAULT_BIN = UUID.fromString("10000000-0000-4000-8000-0000000000c3");
+
     private final CardsApi cardsApi;
     private final CardJourneyParameterPort parameters;
 
@@ -83,9 +87,10 @@ public class IssueCardHandler extends CommandHandler<IssueCardCommand, UUID> {
         cardDTO.setCardStatus(CardDTO.CardStatusEnum.ACTIVE);
 
         // Caller-supplied issuing context.
-        cardDTO.setCardNetworkId(cmd.getCardNetworkId());
-        cardDTO.setIssuerId(cmd.getIssuerId());
-        cardDTO.setBinId(cmd.getBinId());
+        cardDTO.setCardNetworkId(cmd.getCardNetworkId() == null
+                ? DEFAULT_NETWORK : cmd.getCardNetworkId());
+        cardDTO.setIssuerId(cmd.getIssuerId() == null ? DEFAULT_ISSUER : cmd.getIssuerId());
+        cardDTO.setBinId(cmd.getBinId() == null ? DEFAULT_BIN : cmd.getBinId());
 
         // Currency — prefer the caller value. Otherwise use the configured default, which is EUR in the sandbox.
         String currency = cmd.getCurrency() == null ? defaults.currencyCode() : cmd.getCurrency();
