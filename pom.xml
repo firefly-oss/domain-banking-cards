@@ -7,13 +7,13 @@
     <parent>
         <groupId>io.fireflysoftware</groupId>
         <artifactId>firefly-parent</artifactId>
-        <version>26.10.4</version>
+        <version>26.10.5</version>
         <relativePath/>
     </parent>
 
     <artifactId>domain-banking-cards</artifactId>
     <name>domain-banking-cards</name>
-    <version>26.10.4</version>
+    <version>26.10.5</version>
     <packaging>pom</packaging>
 
     <modules>
@@ -36,7 +36,7 @@
             <dependency>
                 <groupId>io.fireflysoftware</groupId>
                 <artifactId>firefly-bom</artifactId>
-                <version>26.10.4</version>
+                <version>26.10.5</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
